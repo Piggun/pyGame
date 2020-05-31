@@ -22,9 +22,10 @@ class player(object):
         self.isJump = False
         self.jumpCount = 10
         self.left = False
-        self.right = False
+        self.right = True
         self.walkCount = 0
         self.standing = True
+        self.hitbox = (self.x + 17, self.y +11, 29, 52)
 
     def draw(self, win):
         if self.walkCount + 1 >= 27:
@@ -41,6 +42,9 @@ class player(object):
                 win.blit(walkRight[0], (self.x, self.y))
             else:
                 win.blit(walkLeft[0], (self.x, self.y))
+        self.hitbox = (self.x + 17, self.y +11, 29, 52)
+        pygame.draw.rect(win, (255,0,0), self.hitbox, 2)
+
 
 class projectile(object):
     def __init__(self, x, y, radius, color, facing):
@@ -66,6 +70,7 @@ class enemy(object):
         self.path = [self.x, self.end]
         self.walkCount = 0
         self.vel = 3
+        self.hitbox = (self.x + 17, self.y +2, 31, 57)
     
     def draw(self, win):
         self.move()
@@ -77,6 +82,8 @@ class enemy(object):
         else:
             win.blit(self.walkLeft[self.walkCount // 3], (self.x, self.y))
             self.walkCount += 1
+        self.hitbox = (self.x + 17, self.y +2, 31, 57)
+        pygame.draw.rect(win, (255, 0, 0), self.hitbox, 2)
 
     def move(self):
         if self.vel > 0: # If the enemy is moving right
@@ -94,6 +101,9 @@ class enemy(object):
                 self.x += self.vel
                 self.walkCount = 0
 
+    def hit(self):
+        print('hit')
+
 def redrawGameWindow():
     win.blit(bg, (0,0))
     man.draw(win)
@@ -105,30 +115,44 @@ def redrawGameWindow():
 # Main loop
 man = player(300, 410 , 64, 64)
 goblin = enemy(100, 415, 64, 64, 300)
+shootLoop = 0
 bullets = []
 run = True
 while run:
     clock.tick(27)
+
+    if shootLoop > 0:
+        shootLoop += 1
+    if shootLoop > 3:
+        shootLoop = 0
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
     
     for bullet in bullets:
-        if bullet.x < 500 and bullet.x > 0:
+        if bullet.y - bullet.radius < goblin.hitbox[1] + goblin.hitbox[3] and bullet.y + bullet.radius > goblin.hitbox[1]:
+            if bullet.x + bullet.radius > goblin.hitbox[0] and bullet.x - bullet.radius < goblin.hitbox[0] + goblin.hitbox[2]:
+                goblin.hit()
+                bullets.pop(bullets.index(bullet))
+
+        if bullet.x < 500 and bullet.x > 0: # Checks if bullet is inside the window
             bullet.x += bullet.vel
         else:
-            bullets.pop(bullets.index(bullet))
+            bullets.pop(bullets.index(bullet)) # Remove bullet
 
 
     keys = pygame.key.get_pressed()
 
-    if keys[pygame.K_SPACE]:
+    if keys[pygame.K_SPACE] and shootLoop == 0:
         if man.left:
             facing = -1
         else:
             facing = 1
-        if len(bullets) < 5:
+        if len(bullets) < 5: # Checks if there's less than 5 bullets on the window
             bullets.append(projectile(round(man.x + man.width //2), round(man.y + man.height //2), 6, (0,0,0), facing ))
+        
+        shootLoop = 1
 
     if keys[pygame.K_LEFT] and man.x > man.vel:
         man.x -= man.vel
@@ -147,8 +171,6 @@ while run:
     if not(man.isJump): # Checks if user is not jumping
         if keys[pygame.K_UP]:
             man.isJump = True
-            man.left = False
-            man.right = False
             man.walkCount = 0
     else:
         if man.jumpCount >= -10:
