@@ -55,6 +55,8 @@ class player(object):
         #pygame.draw.rect(win, (255,0,0), self.hitbox, 2)
     
     def hit(self):
+        self.isJump = False
+        self.jumpCount = 10
         self.x = 60
         self.y = 410
         self.walkCount = 0
@@ -159,11 +161,11 @@ font = pygame.font.SysFont('freesansbold.ttf', 32) # Create font
 run = True
 while run:
     clock.tick(27)
-
-    if man.hitbox[1] < goblin.hitbox[1] + goblin.hitbox[3] and man.hitbox[1] + man.hitbox[3] > goblin.hitbox[1]:
-        if man.hitbox[0] + man.hitbox[2] > goblin.hitbox[0] and man.hitbox[0] < goblin.hitbox[0] + goblin.hitbox[2]:
-            man.hit()
-            score -= 5
+    if goblin.visible == True:
+        if man.hitbox[1] < goblin.hitbox[1] + goblin.hitbox[3] and man.hitbox[1] + man.hitbox[3] > goblin.hitbox[1]:
+            if man.hitbox[0] + man.hitbox[2] > goblin.hitbox[0] and man.hitbox[0] < goblin.hitbox[0] + goblin.hitbox[2]:
+                man.hit()
+                score -= 5
 
     if shootLoop > 0:
         shootLoop += 1
@@ -175,12 +177,13 @@ while run:
             run = False
     
     for bullet in bullets:
-        if bullet.y - bullet.radius < goblin.hitbox[1] + goblin.hitbox[3] and bullet.y + bullet.radius > goblin.hitbox[1]:
-            if bullet.x + bullet.radius > goblin.hitbox[0] and bullet.x - bullet.radius < goblin.hitbox[0] + goblin.hitbox[2]:
-                hitSound.play()
-                goblin.hit()
-                score += 1
-                bullets.pop(bullets.index(bullet))
+        if goblin.visible == True:
+            if bullet.y - bullet.radius < goblin.hitbox[1] + goblin.hitbox[3] and bullet.y + bullet.radius > goblin.hitbox[1]:
+                if bullet.x + bullet.radius > goblin.hitbox[0] and bullet.x - bullet.radius < goblin.hitbox[0] + goblin.hitbox[2]:
+                    hitSound.play()
+                    goblin.hit()
+                    score += 1
+                    bullets.pop(bullets.index(bullet))
 
         if bullet.x < 500 and bullet.x > 0: # Checks if bullet is inside the window
             bullet.x += bullet.vel
